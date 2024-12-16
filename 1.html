@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travel Circus Availability Checker</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background-color: white;
+      color: black;
+      transition: background-color 1.5s ease, color 1.5s ease;
+      font-family: Arial, sans-serif;
+    }
+
+    #toggleTheme {
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      background-color: #6e8efb;
+      color: white;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      transition: background-color 1.5s ease, box-shadow 1.5s ease;
+    }
+
+    #toggleTheme:hover {
+      background-color: #a777e3;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    body.dark-mode {
+      background-color: black;
+      color: white;
+    }
+
+    body.dark-mode #toggleTheme {
+      background-color: #333;
+      color: white;
+      box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+    }
+
+    .amenity-item {
+      margin-right: 10px;
+      padding: 5px 10px;
+      background-color: #f0f0f0;
+      border-radius: 5px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    body.dark-mode .amenity-item {
+      background-color: #333;
+      color: white;
+    }
+
+    body.dark-mode #availabilityInfo {
+      color: white;
+      background-color: #222;
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 2px 5px rgba(255, 255, 255, 0.1);
+    }
+
+    body.dark-mode .calendar-container {
+      background: #222;
+      color: #fff;
+    }
+
+    body.dark-mode .availability {
+      background: #333;
+      color: #f0f0f0;
+      border: 1px solid #444;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .calendar-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(5px);
+    }
+
+    .calendar-container {
+      position: relative;
+      background: #fff;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 500px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      animation: fadeIn 0.5s ease;
+      text-align: center;
+    }
+
+
+    .calendar-header {
+      font-size: 1.5em;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .calendar-container .flatpickr-calendar.rangeMode {
+      width: 400px;
+    }
+
+    .calendar-container .flatpickr-calendar.rangeMode .flatpickr-innerContainer,
+    .calendar-container .flatpickr-calendar.rangeMode .flatpickr-innerContainer .flatpickr-rContainer,
+    .calendar-container .flatpickr-calendar.rangeMode .flatpickr-innerContainer .flatpickr-rContainer .flatpickr-days,
+    .calendar-container .flatpickr-calendar.rangeMode .flatpickr-innerContainer .flatpickr-rContainer .flatpickr-days .dayContainer {
+      width: 400px;
+    }
+
+    .dayContainer {
+      min-width: 400px !important;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 20px;
+      right: 10px;
+      background: #ff5f5f;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      width: 80px;
+      height: 30px;
+      font-size: 1em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s ease;
+    }
+
+    .close-btn:hover {
+      background: #e74c3c;
+    }
+
+    .confirm-btn {
+      background: black;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      cursor: pointer;
+      border-radius: 5px;
+      margin-top: 10px;
+      height: 45px;
+      border-radius: 20px;
+    }
+
+    .availability {
+      margin-top: 20px;
+      font-size: 1em;
+      color: #555;
+      padding: 10px;
+      background: #f9f9f9;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      transition: background 0.3s ease;
+    }
+
+    .flatpickr-day {
+      position: relative;
+      max-width: 60px !important;
+      min-width: 60px !important;
+      height: 60px;
+      line-height: 40px;
+      text-align: center;
+      font-size: 16px;
+      color: #333;
+      cursor: pointer;
+      border-radius: 50%;
+    }
+
+    .flatpickr-day span {
+      font-size: 12px;
+      color: black;
+      display: block;
+    }
+
+    .flatpickr-day[aria-disabled="true"] {
+      background-color: #f8f8f8;
+      color: #ccc;
+    }
+
+    .flatpickr-day[aria-selected="true"] {
+      background-color: #000;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .flatpickr-day:hover {
+      background-color: #ddd;
+    }
+
+    .flatpickr-day.inRange .selected-range {
+      background-color: #f7f3ed;
+      color: #000;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Travel Circus Availability Checker</h1>
+  <div style="display: flex; gap: 30px">
+    <button id="checkAvailability">Check Availability</button>
+    <button id="toggleTheme">Switch to Dark Mode</button>
+  </div>
+  <h2>Available Rooms</h2>
+
+  <div id="roomDetails" style="display: none; text-align: center; margin-top: 20px;"></div>
+
+  <div class="calendar-overlay" id="calendarOverlay">
+    <div class="calendar-container">
+      <button class="close-btn" id="closePopup">Close</button>
+      <div id="calendar"></div>
+      <div class="availability" id="availabilityInfo"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+      const toggleButton = document.getElementById("toggleTheme");
+      const body = document.body;
+
+      toggleButton.addEventListener("click", () => {
+        body.classList.toggle("dark-mode");
+
+        if (body.classList.contains("dark-mode")) {
+          toggleButton.textContent = "Switch to Light Mode";
+        } else {
+          toggleButton.textContent = "Switch to Dark Mode";
+        }
+      });
+
+      const calendarOverlay = document.getElementById("calendarOverlay");
+      const checkAvailabilityBtn = document.getElementById("checkAvailability");
+
+      checkAvailabilityBtn.style.padding = "12px 24px";
+      checkAvailabilityBtn.style.background = "linear-gradient(135deg, #6e8efb, #a777e3)";
+      checkAvailabilityBtn.style.color = "white";
+      checkAvailabilityBtn.style.fontSize = "16px";
+      checkAvailabilityBtn.style.border = "none";
+      checkAvailabilityBtn.style.borderRadius = "25px";
+      checkAvailabilityBtn.style.cursor = "pointer";
+      checkAvailabilityBtn.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.2)";
+      checkAvailabilityBtn.style.fontWeight = "600";
+      checkAvailabilityBtn.style.textTransform = "uppercase";
+      checkAvailabilityBtn.style.transition = "all 0.3s ease-in-out";
+
+      const closePopupBtn = document.getElementById("closePopup");
+      const roomDetails = document.getElementById("roomDetails");
+      const calendarElement = document.getElementById("calendar");
+      const availabilityInfo = document.getElementById("availabilityInfo");
+
+      let selectedDates = [];
+      let availableDates = [];
+      let preSelectedCheckIn = null;
+      let preSelectedCheckOut = null;
+      let preSelectedPricePerPerson = null;
+      let preSelectedDuration = null;
+      let hotelData = [];
+      let description = '';
+
+      const flatpickrInstance = flatpickr(calendarElement, {
+        inline: true,
+        mode: "range",
+        minDate: "today",
+        dateFormat: "Y-m-d",
+        showMonths: 1,
+        onDayCreate: function (dObj, dStr, fp, dayElem) {
+          const date = dayElem.dateObj.toISOString().split("T")[0];
+          const availableDate = availableDates.find((d) => d.date === date);
+
+          if (availableDate) {
+            dayElem.style.position = "relative";
+
+            const priceElem = document.createElement("span");
+            priceElem.style.position = "absolute";
+            priceElem.style.left = "50%";
+            priceElem.style.bottom = "0px";
+            priceElem.style.transform = "translateX(-50%)";
+            priceElem.style.fontSize = "12px";
+            priceElem.style.color = "black";
+            priceElem.textContent = `€${availableDate.price}`;
+
+            dayElem.appendChild(priceElem);
+
+            dayElem.style.backgroundColor = "#cbebd9";
+            dayElem.style.borderRadius = "50%";
+          } else {
+            dayElem.style.color = "#ccc";
+            dayElem.style.display = "flex";
+            dayElem.style.justifyContent = "center";
+            dayElem.style.alignItems = "center";
+          }
+        },
+
+        onChange: async function (dates) {
+          selectedDates = dates;
+          let pricePerPersonTemp = 0;
+          if (selectedDates.length === 2) {
+            const checkin = selectedDates[0].toISOString().split("T")[0];
+            const checkout = selectedDates[1].toISOString().split("T")[0];
+            const duration = Math.ceil(
+              (new Date(selectedDates[1]) - new Date(selectedDates[0])) / (1000 * 60 * 60 * 24)
+            );
+
+            const formattedCheckin = new Date(selectedDates[0]).toLocaleDateString("en-US", {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+            });
+            const formattedCheckout = new Date(selectedDates[1]).toLocaleDateString("en-US", {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+            });
+
+            const checkin_date = selectedDates[0].toISOString().split("T")[0];
+            const checkout_date = selectedDates[1].toISOString().split("T")[0];
+            const selected_duration = Math.ceil(
+              (new Date(selectedDates[1] - new Date(selectedDates[0])) / 86400000));
+
+            try {
+              const response = await fetch(
+                `https://api.travelcircus.net/hotels/17080/quotes?locale=de_DE&checkin=${checkin_date}&checkout=${checkout_date}&party=%7B%22adults%22:2,%22children%22:[]%7D&domain=de`
+              );
+              const data = await response.json();
+              const room = data._embedded.hotel_quotes[0];
+              pricePerPersonTemp = room.full_price_pp.toFixed(2);
+              hotelData = data._embedded.hotel_quotes.map((room) => ({
+                description: room.description,
+                price: room.full_price_pp.toFixed(2),
+                image: room._embedded.pictures[0].offer_teaser_ncol,
+                amenities: room._embedded.amenities,
+                services: room._embedded.addons
+              }));
+
+            } catch (error) {
+              availabilityInfo.textContent = "Failed to load availability.";
+              console.error("Error:", error);
+            }
+
+            preSelectedCheckIn = formattedCheckin;
+            preSelectedCheckOut = formattedCheckout;
+            preSelectedPricePerPerson = pricePerPersonTemp;
+            preSelectedDuration = selected_duration;
+
+            availabilityInfo.innerHTML = `  
+              <div style="display: flex; align-items: center; justify-content: space-around;">
+                <div>
+                  Selected Dates: <strong>${formattedCheckin} -> ${formattedCheckout}</strong><br>
+                  <span>2 adults -- ${pricePerPersonTemp} € per person</span>
+                </div>
+                <button class="confirm-btn" id="confirmBtn">Confirm ${selected_duration} nights</button>
+              </div>
+            `;
+
+            document.getElementById("confirmBtn").addEventListener("click", function () {
+              calendarOverlay.style.display = "none";
+              let detailsHTML = ``;
+              hotelData.forEach((room) => {
+                const amenitiesHTML = Array.isArray(room.amenities)
+                  ? room.amenities
+                    .map(
+                      (amenity) =>
+                        `<span class="amenity-item">${amenity.description}</span>`
+                    )
+                    .join("")
+                  : `<span style="color: gray;">No amenities available</span>`;
+
+                const servicesHTML = Array.isArray(room.services)
+                  ? room.services
+                    .map((service) => {
+                      const href = service._links.self.href;
+                      const cleanName = href.split("/").pop();
+                      return `
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                          <span>✔</span>
+                          <span>${cleanName}</span>
+                        </div>
+                      `;
+                    })
+                    .join("")
+                  : `<div style="color: gray;">No services available</div>`;
+
+                detailsHTML += `
+                  <div style="margin: 20px; border: 1px solid #ccc; padding: 10px 30px; border-radius: 10px; width: 600px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; height: 220px;">
+                      <div style="width: 40%; display: flex; align-items: center; flex-direction: column">
+                        <img src="${room.image}" alt="${room.description}" style="max-width: 200px; border-radius: 10px; width: 100%">
+                      </div>
+                      <div style="width: 60%; height: 100%; overflow: auto">
+                        <h3 style="text-align: start">${room.description}</h3>
+                        <p style="text-align: start"><strong>Price:</strong> €${room.price} <strong>(per person ${preSelectedDuration} nights)</strong></p>
+                        <div class="amenities-container" style="height: 35px; margin-top: 10px; display: flex; flex-wrap: wrap; gap: 10px; overflow: hidden">
+                          ${amenitiesHTML}
+                        </div>
+                        <button class="toggle-button" style="margin: 10px 0; background: none; border: none; color: blue; cursor: pointer;">Show More</button>
+                      </div>
+                    </div>
+                    <div style="width: 100%; height: 1px; background-color: #f0f0f0;"></div>
+                    <div style="font-family: Arial, sans-serif; font-size: 16px;">
+                      <p style="font-weight: bold; margin-bottom: 15px; text-align: start">Included services :</p>
+                      <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start;">
+                        ${servicesHTML}
+                      </div>
+                    </div>
+                  </div>
+                `;
+              });
+
+              roomDetails.innerHTML = detailsHTML;
+              roomDetails.style.display = "flex";
+              roomDetails.style.alignItems = "center";
+              roomDetails.style.justifyContent = "center";
+
+              document.querySelectorAll(".toggle-button").forEach((button) => {
+                button.addEventListener("click", function () {
+                  const amenitiesContainer = this.previousElementSibling;
+
+                  if (this.textContent === "Show More") {
+                    amenitiesContainer.style.height = "auto";
+                    this.textContent = "Hide";
+                  } else {
+                    amenitiesContainer.style.height = "35px";
+                    this.textContent = "Show More";
+                  }
+                });
+              });
+            });
+          }
+        },
+      });
+
+      checkAvailabilityBtn.addEventListener("click", async function () {
+        availabilityInfo.textContent = "Loading availability...";
+        calendarOverlay.style.display = "flex";
+
+        try {
+          const response = await fetch(
+            "https://api.travelcircus.net/hotels/17080/checkins?E&party=%7B%22adults%22:2,%22children%22:%5B%5D%7D&domain=de&date_start=2025-01-01&date_end=2025-06-31"
+          );
+          const data = await response.json();
+          availableDates = [];
+          if (data._embedded && data._embedded.hotel_availabilities) {
+            availableDates = data._embedded.hotel_availabilities.map((entry) => ({
+              date: entry.date,
+              price: entry.price,
+            }));
+            flatpickrInstance.set('enable', availableDates.map(date => date.date));
+          } else {
+            throw new Error("Unexpected data format.");
+          }
+          availabilityInfo.innerHTML = `  
+            <div style="display: flex; align-items: center; justify-content: space-around;">
+              <div style="text-align: justify">
+                Selected Dates: <strong>${preSelectedCheckIn} -> ${preSelectedCheckOut}</strong><br>
+                <span>2 adults -- ${preSelectedPricePerPerson} € per person</span>
+              </div>
+              <button class="confirm-btn" id="confirmBtn">Confirm ${preSelectedDuration} nights</button>
+            </div>
+          `;
+
+          document.getElementById("confirmBtn").addEventListener("click", function () {
+            calendarOverlay.style.display = "none";
+          });
+
+          if (!preSelectedCheckIn || !preSelectedCheckOut || !preSelectedPricePerPerson || !preSelectedDuration) {
+            availabilityInfo.textContent = "Select your desired stay range.";
+          }
+          flatpickrInstance.redraw();
+        } catch (error) {
+          availabilityInfo.textContent = "Failed to load availability.";
+          console.error("Error:", error);
+        }
+      });
+
+      closePopupBtn.addEventListener("click", function () {
+        calendarOverlay.style.display = "none";
+      });
+    });
+  </script>
+</body>
+
+</html>
